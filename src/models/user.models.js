@@ -2,6 +2,7 @@ import bcrypt from "bcryptjs";
 import crypto from "crypto"
 import jwt from "jsonwebtoken"
 import mongoose, { Schema, schema } from "mongoose";
+import { type } from "os";
 
 const userSchema = new Schema(
     {
@@ -38,6 +39,11 @@ const userSchema = new Schema(
             type: String,
             required: [true, "Password is required"],
         },
+        role: {
+            type: String,
+            enum: ["user", "admin"],
+            default: "user",
+        },
         isEmailVerified: {
             type: Boolean,
             default: false,
@@ -67,3 +73,11 @@ userSchema.pre("save", async function (next) {
     next();
 }
 );
+
+const token = crypto.randomBytes(32).toString("hex");
+    console.log(token);
+    user.verificationToken = token;
+
+
+const User = mongoose.model("User", userSchema)
+export default User
