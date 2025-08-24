@@ -5,6 +5,7 @@ import User from "../models/user.models.js";
 
 const registerUser = asyncHandler(async (req, res) => {
     const { email, username, password } = req.body;
+    console.log(email)
     if (!username || !email || !password) {
         return req.status(400).json({
             message: "All filed requred!"
@@ -19,7 +20,7 @@ const registerUser = asyncHandler(async (req, res) => {
     }
 
     const user = await User.create({
-        name,
+        username,
         email,
         password,
     });
@@ -30,6 +31,11 @@ const registerUser = asyncHandler(async (req, res) => {
             message: "User not registered",
         });
     }
+
+    const token = crypto.randomBytes(32).toString("hex");
+        console.log(token);
+        user.emailVerificationToken = token;
+    
 
        await user.save();
     //validation
