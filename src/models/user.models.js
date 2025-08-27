@@ -74,9 +74,9 @@ userSchema.pre("save", async function (next) {
 }
 );
 
-const token = crypto.randomBytes(32).toString("hex");
-    console.log(token);
-    user.verificationToken = token;
+// const token = crypto.randomBytes(32).toString("hex");
+//     console.log(token);
+//     user.verificationToken = token;
 
 
 const User = mongoose.model("User", userSchema)

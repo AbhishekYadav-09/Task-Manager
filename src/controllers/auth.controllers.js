@@ -1,5 +1,6 @@
 import { asyncHandler } from "../utils/async-handler.js";
 import User from "../models/user.models.js";
+import crypto from "crypto";
 
 
 
@@ -33,11 +34,11 @@ const registerUser = asyncHandler(async (req, res) => {
     }
 
     const token = crypto.randomBytes(32).toString("hex");
-        console.log(token);
-        user.emailVerificationToken = token;
-    
+    user.verificationToken = token;
 
-       await user.save();
+
+
+    await user.save();
     //validation
 });
 
