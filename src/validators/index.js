@@ -1,5 +1,6 @@
 import { body, validationResult } from "express-validator"
 import { param } from "express-validator";
+import { header } from "express-validator";
 
 const userRegistrationValidator = [
   body("email")
@@ -20,10 +21,8 @@ const userRegistrationValidator = [
 ];
 
 
-export const emailVerificationValidators = () => [
-  param("token")
-    .notEmpty().withMessage("Token is requ")
-    .isString().withMessage("Token must be a string")
+export const emailVerificationValidators = [
+  param("token").notEmpty().withMessage("Verification token is required")
 ];
 
 export const userLoginValidators = [
@@ -56,27 +55,18 @@ export const userLogoutValidator = [
     .withMessage("Password must be at least 6 characters long"),
 ];
 
+export const getCurrentUserValidator = [
+  header("Authorization")
+    .exists()
+    .withMessage("Authorization header is required")
+    .custom((value) => {
+      if (!value.startsWith("Bearer ")) {
+        throw new Error("Authorization header must start with Bearer");
+      }
+      return true;
+    }),
+];
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-const userLoginValidator = () => {
-  return [
-    body("email").isEmail().withMessage("Email is not valid"),
-    body("password").notEmpty().withMessage("Password cannot be empty"),
-  ];
-};
 
 
 const validate = (req, res, next) => {
@@ -89,6 +79,6 @@ const validate = (req, res, next) => {
   next();
 };
 
-export { userRegistrationValidator, userLoginValidator, validate };
+export { userRegistrationValidator, validate };
 
 

@@ -36,7 +36,6 @@ const registerUser = asyncHandler(async (req, res) => {
     const token = crypto.randomBytes(32).toString("hex");
     user.emailVerificationToken = token;
     user.isVerified = false;
-    console.log(token)
 
     await user.save();
     res.status(201).json({
@@ -53,9 +52,13 @@ const registerUser = asyncHandler(async (req, res) => {
 
 const verifyEmail = asyncHandler(async (req, res) => {
     try {
+        console.log("Req.params token:", req.params.token);
         const { token } = req.params;
         const user = await User.findOne({ emailVerificationToken: token });
-        console.log(user)
+
+        console.log("Request token:", token);
+        console.log("User found:", user);
+
         if (!user) {
             return res.status(400).json({ message: "Invalid or expired token" });
         }
@@ -64,8 +67,6 @@ const verifyEmail = asyncHandler(async (req, res) => {
         user.emailVerificationToken = undefined;
 
         await user.save();
-
-        console.log("✅ User verified successfully!");
 
         return res.status(200).json({
             success: true,
@@ -90,7 +91,7 @@ const loginUser = asyncHandler(async (req, res) => {
     }
 
     try {
-        const user = await User.findOne({email});
+        const user = await User.findOne({ email });
         if (!user) {
             return res.status(400).json({
                 massage: "Invalid email and pass!"
@@ -101,7 +102,7 @@ const loginUser = asyncHandler(async (req, res) => {
 
         if (!isMatch) {
             return res.status(400).json({
-                  message: "Invalid email or password!"
+                message: "Invalid email or password!"
             })
         }
 
@@ -114,6 +115,8 @@ const loginUser = asyncHandler(async (req, res) => {
                 expiresIn: "24h",
             }
         );
+
+        console.log(token)
 
         const cookieOptions = {
             httpOnly: true,
@@ -140,16 +143,40 @@ const loginUser = asyncHandler(async (req, res) => {
 
 });
 
+const getCurrentUser = async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id).select("-password");
+        console.log(user);
+
+        if (!user) {
+            return res.status(400).json({
+                success: false,
+                message: "User not found",
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            user,
+        });
+    } catch (error) {
+        console.log("Error in get me", error);
+    }
+}
+
+
+
+
 const logoutUser = asyncHandler(async (req, res) => {
     try {
-        res.cookie("token", "",{});
+        res.cookie("token", "", {});
         res.status(200).json({
             success: true,
             message: "logOut successFully"
         })
     } catch (error) {
         console.error("Erron in logOut Function:", error);
-        return res.status(500).json({message:"server error in logout function"});
+        return res.status(500).json({ message: "server error in logout function" });
     }
 });
 
@@ -178,12 +205,6 @@ const forgotPasswordRequest = asyncHandler(async (req, res) => {
 });
 
 const changeCurrentPassword = asyncHandler(async (req, res) => {
-    const { email, username, password, role } = req.body;
-
-    //validation
-});
-
-const getCurrentUser = asyncHandler(async (req, res) => {
     const { email, username, password, role } = req.body;
 
     //validation

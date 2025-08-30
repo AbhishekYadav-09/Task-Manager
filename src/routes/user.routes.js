@@ -5,9 +5,11 @@ import {
   emailVerificationValidators,
   userLoginValidators,
   userLogoutValidator,
+  getCurrentUserValidator,
   validate 
 } from "../validators/index.js";
-import { registerUser, verifyEmail, loginUser,logoutUser } from "../controllers/auth.controllers.js";
+import { registerUser, verifyEmail, loginUser,logoutUser, getCurrentUser } from "../controllers/auth.controllers.js";
+import { isAuthenticated } from "../middlewares/auth.middlewares.js";
 
 const router = express.Router();
 
@@ -22,7 +24,7 @@ router.post(
   userRegistrationValidator, validate, registerUser
 );
 
-router.get("/verify/:token", emailVerificationValidators, verifyEmail);
+router.get("/verify/:token", emailVerificationValidators,validate, verifyEmail);
 
 router.post(
   "/login",
@@ -41,6 +43,10 @@ router.post(
   ],
   userLogoutValidator, logoutUser
 )
+
+router.get("/currentUser", getCurrentUserValidator,validate, isAuthenticated, getCurrentUser);
+
+
 
 
 
