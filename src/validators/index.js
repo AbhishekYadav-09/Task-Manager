@@ -1,7 +1,7 @@
 import { body, validationResult } from "express-validator"
 import { param } from "express-validator";
 
- const userRegistrationValidator = [
+const userRegistrationValidator = [
   body("email")
     .trim()
     .notEmpty()
@@ -37,11 +37,24 @@ export const userLoginValidators = [
   body("password")
     .notEmpty()
     .withMessage("Enter the password")
-    .isLength({ min: 6 }) 
+    .isLength({ min: 6 })
     .withMessage("Password must be at least 6 characters long"),
 ];
 
+export const userLogoutValidator = [
+  body("email")
+    .trim()
+    .notEmpty()
+    .withMessage("Email is required")
+    .isEmail()
+    .withMessage("Email is invalid"),
 
+  body("password")
+    .notEmpty()
+    .withMessage("Enter the password")
+    .isLength({ min: 6 })
+    .withMessage("Password must be at least 6 characters long"),
+];
 
 
 

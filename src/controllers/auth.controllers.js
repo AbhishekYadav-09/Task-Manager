@@ -134,16 +134,23 @@ const loginUser = asyncHandler(async (req, res) => {
             },
         });
     } catch (error) {
-        console.error("❌ Error in login function:", error);
+        console.error(" Error in login function:", error);
         return res.status(500).json({ message: "Server error in login function" });
     }
 
 });
 
 const logoutUser = asyncHandler(async (req, res) => {
-    const { email, username, password, role } = req.body;
-
-    //validation
+    try {
+        res.cookie("token", "",{});
+        res.status(200).json({
+            success: true,
+            message: "logOut successFully"
+        })
+    } catch (error) {
+        console.error("Erron in logOut Function:", error);
+        return res.status(500).json({message:"server error in logout function"});
+    }
 });
 
 

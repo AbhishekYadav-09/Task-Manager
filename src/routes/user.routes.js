@@ -4,9 +4,10 @@ import {
   userRegistrationValidator, 
   emailVerificationValidators,
   userLoginValidators,
+  userLogoutValidator,
   validate 
 } from "../validators/index.js";
-import { registerUser, verifyEmail, loginUser } from "../controllers/auth.controllers.js";
+import { registerUser, verifyEmail, loginUser,logoutUser } from "../controllers/auth.controllers.js";
 
 const router = express.Router();
 
@@ -30,6 +31,15 @@ router.post(
     body("password").isLength({min:6}).withMessage("Password must be at least 6 chars"),
   ],
   userLoginValidators, loginUser
+)
+
+router.post(
+  "/logout",
+  [
+    body("email").isEmail().withMessage("Valid email is required"),
+    body("password").isLength({min:6}).withMessage("Password must be at least 6 chars"),
+  ],
+  userLogoutValidator, logoutUser
 )
 
 
