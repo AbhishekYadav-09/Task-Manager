@@ -1,4 +1,5 @@
 import {body, validationResult} from "express-validator"
+import { param } from "express-validator";
 
 const userRegistrationValidator = [
   body("email")
@@ -17,6 +18,29 @@ const userRegistrationValidator = [
     .isLength({ max: 13 })
     .withMessage("username cannot exceed 13 char"),
 ];
+
+
+export const emailVerificationValidators = ()=>[
+  param("token")
+  .notEmpty().withMessage("Token is requ")
+  .isString().withMessage("Token must be a string")
+];
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 const userLoginValidator = () => {
