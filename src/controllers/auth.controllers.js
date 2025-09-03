@@ -52,8 +52,9 @@ const registerUser = asyncHandler(async (req, res) => {
 
 const verifyEmail = asyncHandler(async (req, res) => {
     try {
-        console.log("Req.params token:", req.params.token);
+        console.log("Req.params.token:", req.params.token);
         const { token } = req.params;
+
         const user = await User.findOne({ emailVerificationToken: token });
 
         console.log("Request token:", token);
@@ -63,7 +64,7 @@ const verifyEmail = asyncHandler(async (req, res) => {
             return res.status(400).json({ message: "Invalid or expired token" });
         }
 
-        user.isVerified = true;
+        user.isEmailVerified = true;
         user.emailVerificationToken = undefined;
 
         await user.save();
@@ -165,8 +166,6 @@ const getCurrentUser = async (req, res) => {
 }
 
 
-
-
 const logoutUser = asyncHandler(async (req, res) => {
     try {
         res.cookie("token", "", {});
@@ -181,18 +180,23 @@ const logoutUser = asyncHandler(async (req, res) => {
 });
 
 
+const refreshAccessToken = asyncHandler(async (req, res) => {
+    const incomingRefreshToken = req.cookies.refreshToken || req.body.refreshToken
+
+    if (incomingRefreshToken) {
+
+    }
+
+    //validation
+});
+
+
 const resendEmailVerification = asyncHandler(async (req, res) => {
     const { email, username, password, role } = req.body;
 
     //validation
 });
 const resetForgottenPassword = asyncHandler(async (req, res) => {
-    const { email, username, password, role } = req.body;
-
-    //validation
-});
-
-const refreshAccessToken = asyncHandler(async (req, res) => {
     const { email, username, password, role } = req.body;
 
     //validation

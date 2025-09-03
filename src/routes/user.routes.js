@@ -1,15 +1,23 @@
 import express from "express";
 import { body } from "express-validator";
-import { 
-  userRegistrationValidator, 
+import { isAuthenticated } from "../middlewares/auth.middlewares.js";
+
+import {
+  userRegistrationValidator,
   emailVerificationValidators,
   userLoginValidators,
   userLogoutValidator,
   getCurrentUserValidator,
-  validate 
+  validate
 } from "../validators/index.js";
-import { registerUser, verifyEmail, loginUser,logoutUser, getCurrentUser } from "../controllers/auth.controllers.js";
-import { isAuthenticated } from "../middlewares/auth.middlewares.js";
+
+import {
+  registerUser,
+  verifyEmail,
+  loginUser,
+  logoutUser,
+  getCurrentUser
+} from "../controllers/auth.controllers.js";
 
 const router = express.Router();
 
@@ -24,13 +32,13 @@ router.post(
   userRegistrationValidator, validate, registerUser
 );
 
-router.get("/verify/:token", emailVerificationValidators,validate, verifyEmail);
+router.get("/verify/:token", emailVerificationValidators, validate, verifyEmail);
 
 router.post(
   "/login",
   [
     body("email").isEmail().withMessage("Valid email is required"),
-    body("password").isLength({min:6}).withMessage("Password must be at least 6 chars"),
+    body("password").isLength({ min: 6 }).withMessage("Password must be at least 6 chars"),
   ],
   userLoginValidators, loginUser
 )
@@ -39,12 +47,12 @@ router.post(
   "/logout",
   [
     body("email").isEmail().withMessage("Valid email is required"),
-    body("password").isLength({min:6}).withMessage("Password must be at least 6 chars"),
+    body("password").isLength({ min: 6 }).withMessage("Password must be at least 6 chars"),
   ],
   userLogoutValidator, logoutUser
 )
 
-router.get("/currentUser", getCurrentUserValidator,validate, isAuthenticated, getCurrentUser);
+router.get("/currentUser", getCurrentUserValidator, validate, isAuthenticated, getCurrentUser);
 
 
 
