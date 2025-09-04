@@ -16,7 +16,8 @@ import {
   verifyEmail,
   loginUser,
   logoutUser,
-  getCurrentUser
+  getCurrentUser,
+  refreshAccessToken
 } from "../controllers/auth.controllers.js";
 
 const router = express.Router();
@@ -54,6 +55,7 @@ router.post(
 
 router.get("/currentUser", getCurrentUserValidator, validate, isAuthenticated, getCurrentUser);
 
+router.post("/refresh-token", refreshAccessToken )
 
 
 
