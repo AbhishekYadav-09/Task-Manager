@@ -5,6 +5,7 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import { ApiResponse } from "../utils/api-response.js";
 import { ApiError } from "../utils/api-error.js";
+import SendmailTransport from "nodemailer/lib/sendmail-transport/index.js";
 
 
 const registerUser = asyncHandler(async (req, res) => {
@@ -54,9 +55,7 @@ const registerUser = asyncHandler(async (req, res) => {
 
 const verifyEmail = asyncHandler(async (req, res) => {
     try {
-        console.log("Req.params.token:", req.params.token);
         const { token } = req.params;
-
         const user = await User.findOne({ emailVerificationToken: token });
 
         console.log("Request token:", token);
@@ -254,15 +253,31 @@ const resendEmailVerification = asyncHandler(async (req, res) => {
 
     //validation
 });
-const resetForgottenPassword = asyncHandler(async (req, res) => {
-    const { email, username, password, role } = req.body;
 
-    //validation
+const forgotPasswordRequest = asyncHandler(async (req, res)=>{
+    const {email} = req.body;
+    const user = await User.findOne(email);
+
+    if(!user){
+        res.status(404).json({message: "user not found"})
+    }
+
+    const resetToken = crypto.randomBytes(32).toString("hex")
+    user.forgotPasswordToken = crypto.createHash("shake256").update(resetToken).digest("hex");
+    user.forgotPasswordExpiry = Date.now() + 10 * 60 * 1000
+    await user.save()
+
+    const passwordResetUrl = `http://localhost:5000/api/auth/reset-password/${resetToken}`;
+
+    await  sendEmail({
+        to: email,
+        subject: "Password Reset Request",
+        html: `<p>Click <a href="${passwordResetUrl}">here</a> to reset your password.</p>`
+    })
+    res.status(200).json({message: "Password reset email sent"})
 });
 
-const forgotPasswordRequest = asyncHandler(async (req, res) => {
-    const { email, username, password, role } = req.body;
-
+const resetForgottenPassword = asyncHandler(async (req, res) => {
     //validation
 });
 
@@ -300,7 +315,7 @@ const changeCurrentPassword = asyncHandler(async (req, res) => {
 });
 
 export {
-    changeCurrentPassword,
+    changeCurrentPassword, 
     forgotPasswordRequest,
     getCurrentUser,
     loginUser,
