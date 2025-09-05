@@ -86,7 +86,7 @@ const verifyEmail = asyncHandler(async (req, res) => {
 
 const loginUser = asyncHandler(async (req, res) => {
     const { email, password } = req.body;
-
+    console.log(email)
     if (!email || !password) {
         return res.status(400).json({
             message: "All fields are required",
@@ -109,7 +109,7 @@ const loginUser = asyncHandler(async (req, res) => {
             })
         }
 
-        const token = jwt.sign(
+        const accessToken = jwt.sign(
             {
                 id: user._id, role: user.role
             },
@@ -119,6 +119,18 @@ const loginUser = asyncHandler(async (req, res) => {
             }
         );
 
+        const refreshToken = jwt.sign(
+            {
+                id: user._id, role: user.role
+            },
+            process.env.JWT_SECRET,
+            {
+                expiresIn: "7d"
+            }
+        )
+
+        user.refreshToken = refreshToken
+        await user.save();
 
         const cookieOptions = {
             httpOnly: true,
@@ -126,12 +138,13 @@ const loginUser = asyncHandler(async (req, res) => {
             maxAge: 24 * 60 * 60 * 1000,
         };
 
-        res.cookie("token", token, cookieOptions);
+        res.cookie("accessToken", accessToken, cookieOptions);
+        res.cookie("refreshToken", refreshToken, cookieOptions);
 
         res.status(200).json({
             success: true,
             message: "Login successful",
-            token,
+            accessToken,
             user: {
                 id: user._id,
                 name: user.name,
@@ -169,15 +182,21 @@ const getCurrentUser = async (req, res) => {
 
 const logoutUser = asyncHandler(async (req, res) => {
     try {
+        await User.findByIdAndUpdate(req.user._id,{refreshToken: undefined});
         res.cookie("token", "", {});
         res.status(200).json({
             success: true,
             message: "logOut successFully"
         })
+
+
     } catch (error) {
+
         console.error("Erron in logOut Function:", error);
         return res.status(500).json({ message: "server error in logout function" });
     }
+
+
 });
 
 
@@ -186,7 +205,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     console.log(incomingRefreshToken);
 
     if (!incomingRefreshToken) {
-       throw new ApiError(401, "unauthorizad request") 
+        throw new ApiError(401, "unauthorizad request")
     }
 
     try {
@@ -194,39 +213,40 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
             incomingRefreshToken,
             process.env.REFRESH_TOKEN_SECRET
         )
-    
+
         const user = await User.findById(decodedToken?._id)
-    
-        if(!user){
+
+        if (!user) {
             throw new ApiError(401, "Invalid refresh token")
         }
-    
-        if(incomingRefreshToken !== user?.refreshToken){
+
+        if (incomingRefreshToken !== user?.refreshToken) {
             throw new ApiError(401, "Invalid refresh token")
         }
-    
+
         const options = {
             httpOnly: true,
             secure: true
         }
-    
-        const {accessToken, newRefreshToken} = await generateAccessAndRefereshTokens(user._id)
-    
+
+        const { newAccessToken, newRefreshToken } = await generateAccessAndRefereshTokens(user._id)
+
         return res
-        .status(200)
-        .cookie("accessToken", accessToken , newRefreshToken)
-        .cookie("refreshToken")
-        .json(
-            new ApiResponse(
-                200,
-                {accessToken, refreshToken: newRefreshToken},
-                "Access token refreshed"
+            .status(200)
+            .cookie("accessToken", newAccessToken, options)
+            .cookie("refreshToken", newRefreshToken, options)
+            .json(
+                new ApiResponse(
+                    200,
+                    { newAccessToken, token: newRefreshToken },
+                    "Access token refreshed"
+                )
             )
-        )
+
     } catch (error) {
         throw new ApiError(401, error?.message || "invalid refresh token")
     }
-   
+
 });
 
 

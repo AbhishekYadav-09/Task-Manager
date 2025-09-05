@@ -3,7 +3,10 @@ import User from "../models/user.models.js";
 
 export const isAuthenticated = async (req, res, next) => {
   try {
-    const token = req.headers.authorization?.split(" ")[1];
+    let token = req.headers.authorization?.split(" ")[1];
+    if(!token){
+      token = token = req.cookies.refreshToken;
+    }
     if (!token) {
       return res.status(401).json({ message: "Not authorized, no token" });
     }
@@ -14,7 +17,6 @@ export const isAuthenticated = async (req, res, next) => {
     if (!req.user) {
       return res.status(404).json({ message: "User not found" });
     }
-
     next();
   } catch (error) {
     res.status(401).json({ message: "Not authorized, token failed" });

@@ -50,7 +50,7 @@ router.post(
     body("email").isEmail().withMessage("Valid email is required"),
     body("password").isLength({ min: 6 }).withMessage("Password must be at least 6 chars"),
   ],
-  userLogoutValidator, logoutUser
+  isAuthenticated,userLogoutValidator, logoutUser
 )
 
 router.get("/currentUser", getCurrentUserValidator, validate, isAuthenticated, getCurrentUser);
