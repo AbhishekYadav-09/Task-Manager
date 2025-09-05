@@ -86,7 +86,6 @@ const verifyEmail = asyncHandler(async (req, res) => {
 
 const loginUser = asyncHandler(async (req, res) => {
     const { email, password } = req.body;
-    console.log(email)
     if (!email || !password) {
         return res.status(400).json({
             message: "All fields are required",
@@ -268,9 +267,36 @@ const forgotPasswordRequest = asyncHandler(async (req, res) => {
 });
 
 const changeCurrentPassword = asyncHandler(async (req, res) => {
-    const { email, username, password, role } = req.body;
+    const {currentPassword, newPassword} = req.body;
+    console.log(currentPassword, newPassword)
+    try {
+        const user = await User.findOne(req.user._id);
+        console.log(user)
+        if(!user){
+            res.status(404).json({
+                message: "user not found"
+            })
+        }
+    
+        const isMatchPassword = await bcrypt.compare(currentPassword, user.password);
+        if(!isMatchPassword){
+            res.status(404).json({message: "invalid password"})
+        }
+    
+        const salt = await bcrypt.genSalt(10);
+        const updatedPassword = await bcrypt.hash(newPassword, salt);
+    
+        user.password = updatedPassword;
+        await user.save()
+        res.status(200).json({ message: "Password updated successfully" });
+    } catch (error) {
+         res.status(500).json({ message: "Error changing password", error: error.message });
+    }
 
-    //validation
+
+
+
+
 });
 
 export {
