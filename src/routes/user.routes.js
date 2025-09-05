@@ -18,7 +18,9 @@ import {
   logoutUser,
   getCurrentUser,
   refreshAccessToken,
-  changeCurrentPassword
+  changeCurrentPassword,
+  forgotPasswordRequest,
+  resetForgottenPassword
 } from "../controllers/auth.controllers.js";
 
 const router = express.Router();
@@ -59,6 +61,8 @@ router.get("/currentUser", getCurrentUserValidator, validate, isAuthenticated, g
 router.post("/refresh-token", refreshAccessToken )
 
 router.post("/forgotPassword", isAuthenticated, changeCurrentPassword)
+
+router.post("/reset-pass", forgotPasswordRequest, resetForgottenPassword)
 
 
 export default router

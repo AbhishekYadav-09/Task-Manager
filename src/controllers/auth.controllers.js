@@ -5,7 +5,7 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import { ApiResponse } from "../utils/api-response.js";
 import { ApiError } from "../utils/api-error.js";
-import SendmailTransport from "nodemailer/lib/sendmail-transport/index.js";
+
 
 
 const registerUser = asyncHandler(async (req, res) => {
@@ -256,7 +256,7 @@ const resendEmailVerification = asyncHandler(async (req, res) => {
 
 const forgotPasswordRequest = asyncHandler(async (req, res)=>{
     const {email} = req.body;
-    const user = await User.findOne(email);
+    const user = await User.findOne({email});
 
     if(!user){
         res.status(404).json({message: "user not found"})
@@ -269,7 +269,7 @@ const forgotPasswordRequest = asyncHandler(async (req, res)=>{
 
     const passwordResetUrl = `http://localhost:5000/api/auth/reset-password/${resetToken}`;
 
-    await  sendEmail({
+    await transporter.sendMail({
         to: email,
         subject: "Password Reset Request",
         html: `<p>Click <a href="${passwordResetUrl}">here</a> to reset your password.</p>`
@@ -278,7 +278,28 @@ const forgotPasswordRequest = asyncHandler(async (req, res)=>{
 });
 
 const resetForgottenPassword = asyncHandler(async (req, res) => {
-    //validation
+
+    const { newPassword } = req.body;
+    const resetToken = req.params.token;
+    const hashedToken = crypto.createHash("sha256").update(resetToken).digest("hex");
+
+    const user = await User.findOne({
+        passwordResetToken: hashedToken,
+        passwordResetExpires: { $gt: Date.now() },
+    });
+    if (!user) {
+        return res.status(400).json({ message: "Invalid or expired token" });
+    }
+
+
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(newPassword, salt);
+
+    user.forgotPasswordToken = undefined;
+    user.forgotPasswordExpiry = undefined;
+    await user.save();
+
+    res.status(200).json({ message: "Password successfully reset" });
 });
 
 const changeCurrentPassword = asyncHandler(async (req, res) => {
