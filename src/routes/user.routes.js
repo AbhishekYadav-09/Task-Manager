@@ -62,7 +62,9 @@ router.post("/refresh-token", refreshAccessToken )
 
 router.post("/forgotPassword", isAuthenticated, changeCurrentPassword)
 
-router.post("/reset-pass", forgotPasswordRequest, resetForgottenPassword)
+router.post("/reset-pass", forgotPasswordRequest)
+
+router.post("/reset-pass/:token", resetForgottenPassword)
 
 
 export default router

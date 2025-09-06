@@ -5,7 +5,7 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import { ApiResponse } from "../utils/api-response.js";
 import { ApiError } from "../utils/api-error.js";
-
+import { sendEmail } from "../utils/mail.js";
 
 
 const registerUser = asyncHandler(async (req, res) => {
@@ -180,7 +180,7 @@ const getCurrentUser = async (req, res) => {
 
 const logoutUser = asyncHandler(async (req, res) => {
     try {
-        await User.findByIdAndUpdate(req.user._id,{refreshToken: undefined});
+        await User.findByIdAndUpdate(req.user._id, { refreshToken: undefined });
         res.cookie("token", "", {});
         res.status(200).json({
             success: true,
@@ -254,12 +254,12 @@ const resendEmailVerification = asyncHandler(async (req, res) => {
     //validation
 });
 
-const forgotPasswordRequest = asyncHandler(async (req, res)=>{
-    const {email} = req.body;
-    const user = await User.findOne({email});
+const forgotPasswordRequest = asyncHandler(async (req, res) => {
+    const { email } = req.body;
+    const user = await User.findOne({ email });
 
-    if(!user){
-        res.status(404).json({message: "user not found"})
+    if (!user) {
+        res.status(404).json({ message: "user not found" })
     }
 
     const resetToken = crypto.randomBytes(32).toString("hex")
@@ -267,14 +267,20 @@ const forgotPasswordRequest = asyncHandler(async (req, res)=>{
     user.forgotPasswordExpiry = Date.now() + 10 * 60 * 1000
     await user.save()
 
-    const passwordResetUrl = `http://localhost:5000/api/auth/reset-password/${resetToken}`;
+    console.log(resetToken)
+    console.log(user.forgotPasswordToken)
 
-    await transporter.sendMail({
-        to: email,
-        subject: "Password Reset Request",
-        html: `<p>Click <a href="${passwordResetUrl}">here</a> to reset your password.</p>`
-    })
-    res.status(200).json({message: "Password reset email sent"})
+    // const passwordResetUrl = `http://localhost:5000/api/auth/reset-password/${resetToken}`;
+
+    await sendEmail({
+        user: {
+            name: user.username,
+            email: user.email,
+        },
+        token: resetToken,
+        type: "reset",
+    });
+    res.status(200).json({ message: "Password reset email sent" })
 });
 
 const resetForgottenPassword = asyncHandler(async (req, res) => {
@@ -282,10 +288,12 @@ const resetForgottenPassword = asyncHandler(async (req, res) => {
     const { newPassword } = req.body;
     const resetToken = req.params.token;
     const hashedToken = crypto.createHash("sha256").update(resetToken).digest("hex");
+    console.log("resetToken", resetToken)
+    console.log("hashToken", hashedToken)
 
     const user = await User.findOne({
-        passwordResetToken: hashedToken,
-        passwordResetExpires: { $gt: Date.now() },
+        forgotPasswordToken: hashedToken,
+        forgotPasswordExpiry: { $gt: Date.now() },
     });
     if (!user) {
         return res.status(400).json({ message: "Invalid or expired token" });
@@ -303,30 +311,30 @@ const resetForgottenPassword = asyncHandler(async (req, res) => {
 });
 
 const changeCurrentPassword = asyncHandler(async (req, res) => {
-    const {currentPassword, newPassword} = req.body;
+    const { currentPassword, newPassword } = req.body;
     console.log(currentPassword, newPassword)
     try {
         const user = await User.findOne(req.user._id);
         console.log(user)
-        if(!user){
+        if (!user) {
             res.status(404).json({
                 message: "user not found"
             })
         }
-    
+
         const isMatchPassword = await bcrypt.compare(currentPassword, user.password);
-        if(!isMatchPassword){
-            res.status(404).json({message: "invalid password"})
+        if (!isMatchPassword) {
+            res.status(404).json({ message: "invalid password" })
         }
-    
+
         const salt = await bcrypt.genSalt(10);
         const updatedPassword = await bcrypt.hash(newPassword, salt);
-    
+
         user.password = updatedPassword;
         await user.save()
         res.status(200).json({ message: "Password updated successfully" });
     } catch (error) {
-         res.status(500).json({ message: "Error changing password", error: error.message });
+        res.status(500).json({ message: "Error changing password", error: error.message });
     }
 
 
@@ -336,7 +344,7 @@ const changeCurrentPassword = asyncHandler(async (req, res) => {
 });
 
 export {
-    changeCurrentPassword, 
+    changeCurrentPassword,
     forgotPasswordRequest,
     getCurrentUser,
     loginUser,
